@@ -7,7 +7,8 @@
           <span class="text-h5 font-weight-regular ml-4">共123個結果</span>
         </div>
       </v-col>
-      <v-col cols="12" sm="3">
+      <!-- view point < 600px 時不顯示 -->
+      <v-col cols="12" sm="3" class="d-none d-sm-flex">
         <div class="text-h6 font-weight-bold">景點類別</div>
         <v-checkbox label="旅遊"></v-checkbox>
         <v-checkbox class="mt-0" label="餐飲"></v-checkbox>
@@ -16,6 +17,51 @@
         <v-checkbox class="mt-0" label="觀光工廠類"></v-checkbox>
         <v-checkbox class="mt-0" label="其他"></v-checkbox>
       </v-col>
+      <!-- view point < 600px 顯示 -->
+      <v-row class="d-flex d-sm-none">
+        <v-dialog persistent v-model="dialog">
+          <template v-slot:activator="{ on, attrs }">
+            <v-col cols="12">
+              <v-chip
+                class="ma-2"
+                color="black"
+                outlined
+                v-bind="attrs"
+                v-on="on"
+              >景點類別<v-icon right>fas fa-angle-down</v-icon>
+              </v-chip>
+              <v-chip
+                class="ma-2"
+                color="black"
+                outlined
+                v-bind="attrs"
+                v-on="on"
+              >相關類別<v-icon right>fas fa-angle-down</v-icon>
+              </v-chip>
+            </v-col>
+          </template>
+          <v-col cols="12">
+            <v-sheet class="pa-4 vh-80">
+              <v-row align="center">
+                <v-col class="d-flex align-start" cols="12"
+                  ><v-btn color="grey darken-1" icon @click="dialog = false"
+                    ><v-icon>fas fa-times</v-icon>
+                  </v-btn></v-col
+                >
+                <v-col cols="12">
+                  <div class="text-h6 font-weight-bold">景點類別</div>
+                  <v-checkbox label="旅遊"></v-checkbox>
+                  <v-checkbox class="mt-0" label="餐飲"></v-checkbox>
+                  <div class="text-h6 font-weight-bold">相關類別</div>
+                  <v-checkbox label="遊憩類"></v-checkbox>
+                  <v-checkbox class="mt-0" label="觀光工廠類"></v-checkbox>
+                  <v-checkbox class="mt-0" label="其他"></v-checkbox>
+                </v-col>
+              </v-row>
+            </v-sheet>
+          </v-col>
+        </v-dialog>
+      </v-row>
       <v-col cols="12" sm="9">
         <v-card class="rounded-lg mb-6" outlined>
           <div class="d-flex flex-no-wrap justify-start">
@@ -70,11 +116,17 @@ export default {
     Navbar,
     Footer,
   },
+  data: () => ({
+    dialog: false,
+  }),
 };
 </script>
 
 <style lang="scss" scoped>
 .w-100 {
   width: 100%;
+}
+.vh-80 {
+  height: 80vh;
 }
 </style>

@@ -5,6 +5,24 @@
       <v-col cols="12" sm="6">
         <h2 class="font-weight-bold pt-0 pb-8 text-h3">四草野生動物保護區</h2>
         <p class="py-0 text-h4 grey--text">遊憩類</p>
+        <!-- vp > 600px 顯示 呈現文左圖右 -->
+        <div class="d-none d-sm-flex flex-column">
+          <p class="py-0 text-body-1">
+            <i class="fas fa-phone-alt grey--text mr-3"
+            ></i>06-12345<span class="primary--text ml-3">撥打電話</span></p>
+          <p class="py-0 text-body-1">
+            <i class="fas fa-clock grey--text mr-3"
+            ></i>週一~週五8:00~17:30，週六、日需預約</p>
+          <p class="py-0 text-body-1">
+            <i class="fas fa-map-marker-alt mr-1 grey--text mr-3"
+            ></i>臺南市709安南區四草大道上</p>
+        </div>
+      </v-col>
+      <!-- vp > 600px 不顯示, 當<600px時 呈現標題-圖-資訊 -->
+      <v-col cols="12" sm="6" class="d-flex d-sm-none">
+        <v-img class="rounded-lg" src="https://picsum.photos/460/310/?random=3"></v-img>
+      </v-col>
+      <v-col cols="12" sm="6" class="d-flex d-sm-none flex-column">
         <p class="py-0 text-body-1">
           <i class="fas fa-phone-alt grey--text mr-3"
           ></i>06-12345<span class="primary--text ml-3">撥打電話</span></p>
@@ -15,7 +33,8 @@
           <i class="fas fa-map-marker-alt mr-1 grey--text mr-3"
           ></i>臺南市709安南區四草大道上</p>
       </v-col>
-      <v-col cols="12" sm="6">
+      <!-- vp > 600px 顯示 呈現文左圖右 -->
+      <v-col cols="12" sm="6" class="d-none d-sm-flex">
         <v-img class="rounded-lg" src="https://picsum.photos/460/310/?random=3"></v-img>
       </v-col>
     </v-row>
