@@ -16,7 +16,7 @@
         <v-row align="center" justify="center" class="w-100 ma-0">
           <v-col cols="12" sm="10">
             <v-sheet elevation="12" rounded="xl" class="pa-8">
-              <v-radio-group row>
+              <v-radio-group v-model="className" row>
                 <v-radio label="不分類別" value="不分類別"></v-radio>
                 <v-radio label="旅遊景點" value="旅遊景點"></v-radio>
                 <v-radio label="餐廳美食" value="餐廳美食"></v-radio>
@@ -27,13 +27,15 @@
                     label="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
+                    v-model="keyWord"
                   ></v-text-field>
                 </v-col>
                 <v-col class="d-flex" cols="12" md="3" sm="3">
-                  <v-select label="不分縣市" outlined></v-select>
+                  <v-select label="不分縣市" outlined :items="city" v-model="selectedCity"></v-select>
                 </v-col>
                 <v-col class="d-flex" cols="12" md="3" sm="12">
-                  <v-btn class="mr-4 w-100 black--text text-h6" depressed color="primary" x-large>
+                  <v-btn @click="searchSpot" class="mr-4 w-100 black--text text-h6"
+                  depressed color="primary" x-large>
                     搜尋
                   </v-btn>
                 </v-col>
@@ -56,6 +58,7 @@
                     v-bind="attrs"
                     v-on="on"
                     class="white"
+                    v-model="keyWord"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -74,13 +77,14 @@
                     label="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
+                    v-model="keyWord"
                   ></v-text-field>
                 </v-col>
                 <v-col class="d-flex" cols="12">
-                  <v-select label="不分縣市" outlined></v-select>
+                  <v-select label="不分縣市" outlined :items="city" v-model="selectedCity"></v-select>
                 </v-col>
                 <v-col class="d-flex" cols="12">
-                  <v-radio-group row class="mt-0">
+                  <v-radio-group v-model="className" row class="mt-0">
                     <v-radio label="不分類別" value="不分類別"></v-radio>
                     <v-radio label="旅遊景點" value="旅遊景點"></v-radio>
                     <v-radio label="餐廳美食" value="餐廳美食"></v-radio>
@@ -134,35 +138,13 @@
       <v-col cols="12" sm="12" class="pb-0">
         <p class="text-h4 font-weight-bold mb-3">推薦景點</p>
       </v-col>
-      <v-col cols="12" sm="4">
-        <v-card class="rounded-lg" outlined>
-          <v-img src="https://picsum.photos/363/248/?random=1"></v-img>
+      <v-col v-for="item in scenic" :key="item.ID" cols="12" sm="4">
+        <v-card @click="getScenicSpots(item.ID)" class="rounded-lg" outlined>
+          <v-img :src="item.Picture.PictureUrl1" height="250px"></v-img>
           <v-card-text class="primary--text py-2">景點</v-card-text>
-          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">四草野生動物保護區</v-card-title>
+          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
           <v-card-text class="py-0 text-body-1">
-            <i class="fas fa-map-marker-alt mr-1"></i>台南市
-          </v-card-text>
-          <v-card-text class="py-4">遊憩類</v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="4">
-        <v-card class="rounded-lg" outlined>
-          <v-img src="https://picsum.photos/363/248/?random=2"></v-img>
-          <v-card-text class="primary--text py-2">景點</v-card-text>
-          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">四草野生動物保護區</v-card-title>
-          <v-card-text class="py-0 text-body-1">
-            <i class="fas fa-map-marker-alt mr-1"></i>台南市
-          </v-card-text>
-          <v-card-text class="py-4">遊憩類</v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="4">
-        <v-card class="rounded-lg" outlined>
-          <v-img src="https://picsum.photos/363/248/?random=3"></v-img>
-          <v-card-text class="primary--text py-2">景點</v-card-text>
-          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">四草野生動物保護區</v-card-title>
-          <v-card-text class="py-0 text-body-1">
-            <i class="fas fa-map-marker-alt mr-1"></i>台南市
+            <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
           </v-card-text>
           <v-card-text class="py-4">遊憩類</v-card-text>
         </v-card>
@@ -173,6 +155,7 @@
 </template>
 
 <script>
+import JsSHA from 'jssha';
 import Navbar from '../Navbar.vue';
 import Footer from '../Footer.vue';
 
@@ -184,7 +167,53 @@ export default {
   },
   data: () => ({
     dialog: false,
+    scenic: [],
+    selectedCity: '',
+    keyWord: '',
+    className: '',
+    city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
   }),
+  methods: {
+    getScenicSpot() {
+      const api = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$top=3&$format=JSON';
+      const vm = this;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+        console.log(response);
+        vm.scenic = response.data;
+      });
+    },
+    getScenicSpots(id) {
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
+      const vm = this;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+        console.log(response);
+        console.log(id);
+        // vm.scenic = response.data;
+        vm.$router.push(`/scenePage/${id}`).catch(() => {});
+      });
+    },
+    searchSpot() {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=Description/any(d:(contains(d/Description/Zh-tw,'${vm.keyWord}')eq true))'&$top=30&$format=JSON`;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+        console.log(response);
+      });
+    },
+    getAuthorizationHeader() {
+      const appID = '4f650471c3a946078042df58395fa922';
+      const appKey = 'rMjx-NyfKoXX93I7ZTe59VjoEPM';
+      const GMTString = new Date().toGMTString();
+      const ShaObj = new JsSHA('SHA-1', 'TEXT');
+      ShaObj.setHMACKey(appKey, 'TEXT');
+      ShaObj.update(`x-date: ${GMTString}`);
+      const HMAC = ShaObj.getHMAC('B64');
+      const authorization = 'hmac username="' + appID + '", algorithm="hmac-sha1", headers="x-date", signature="' + HMAC + '"';
+      return { Authorization: authorization, 'x-date': GMTString };
+    },
+  },
+  created() {
+    this.getScenicSpot();
+  },
 };
 </script>
 

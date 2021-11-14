@@ -1,11 +1,8 @@
 <template>
-  <v-app-bar
-    flat
-    height="80px"
-    color="white"
-  >
+  <v-app-bar flat height="80px" color="white">
+    <router-link to="/">
       <div class="d-flex align-center">
-          <v-img
+        <v-img
           alt="Taiwan Travel Logo"
           class="shrink mr-4"
           contain
@@ -15,11 +12,10 @@
         />
         <h1 class="primary--text text-h5 font-weight-bold">來去走走</h1>
       </div>
+    </router-link>
   </v-app-bar>
 </template>
 
 <script>
-export default {
-
-};
+export default {};
 </script>

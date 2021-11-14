@@ -15,7 +15,7 @@ const routes = [
     component: () => import('../views/pages/SearchResult.vue'),
   },
   {
-    path: '/scenePage',
+    path: '/scenePage/:id',
     name: 'ScenePage',
     component: () => import('../views/pages/ScenePage.vue'),
   },

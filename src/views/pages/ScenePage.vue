@@ -3,46 +3,46 @@
     <Navbar></Navbar>
     <v-row class="d-flex flex-no-wrap justify-space-between w-100 mt-6">
       <v-col cols="12" sm="6">
-        <h2 class="font-weight-bold pt-0 pb-8 text-h3">四草野生動物保護區</h2>
+        <h2 class="font-weight-bold pt-0 pb-8 text-h3">{{scenic[0].Name}}</h2>
         <p class="py-0 text-h4 grey--text">遊憩類</p>
         <!-- vp > 600px 顯示 呈現文左圖右 -->
         <div class="d-none d-sm-flex flex-column">
           <p class="py-0 text-body-1">
             <i class="fas fa-phone-alt grey--text mr-3"
-            ></i>06-12345<span class="primary--text ml-3">撥打電話</span></p>
+            ></i>{{scenic[0].Phone}}<span class="primary--text ml-3">撥打電話</span></p>
           <p class="py-0 text-body-1">
             <i class="fas fa-clock grey--text mr-3"
-            ></i>週一~週五8:00~17:30，週六、日需預約</p>
+            ></i>{{scenic[0].OpenTime}}</p>
           <p class="py-0 text-body-1">
             <i class="fas fa-map-marker-alt mr-1 grey--text mr-3"
-            ></i>臺南市709安南區四草大道上</p>
+            ></i>{{scenic[0].Address}}</p>
         </div>
       </v-col>
       <!-- vp > 600px 不顯示, 當<600px時 呈現標題-圖-資訊 -->
       <v-col cols="12" sm="6" class="d-flex d-sm-none">
-        <v-img class="rounded-lg" src="https://picsum.photos/460/310/?random=3"></v-img>
+        <v-img class="rounded-lg" height="300px" :src="scenic[0].Picture.PictureUrl1"></v-img>
       </v-col>
       <v-col cols="12" sm="6" class="d-flex d-sm-none flex-column">
         <p class="py-0 text-body-1">
           <i class="fas fa-phone-alt grey--text mr-3"
-          ></i>06-12345<span class="primary--text ml-3">撥打電話</span></p>
+          ></i>{{scenic[0].Phone}}<span class="primary--text ml-3">撥打電話</span></p>
         <p class="py-0 text-body-1">
           <i class="fas fa-clock grey--text mr-3"
-          ></i>週一~週五8:00~17:30，週六、日需預約</p>
+          ></i>{{scenic[0].OpenTime}}</p>
         <p class="py-0 text-body-1">
           <i class="fas fa-map-marker-alt mr-1 grey--text mr-3"
-          ></i>臺南市709安南區四草大道上</p>
+          ></i>{{scenic[0].Address}}</p>
       </v-col>
       <!-- vp > 600px 顯示 呈現文左圖右 -->
       <v-col cols="12" sm="6" class="d-none d-sm-flex">
-        <v-img class="rounded-lg" src="https://picsum.photos/460/310/?random=3"></v-img>
+        <v-img class="rounded-lg" height="300px" :src="scenic[0].Picture.PictureUrl1"></v-img>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12">
         <h3 class="text-h4 font-weight-bold mb-6">景點介紹</h3>
         <p>
-          四草的生態環境特殊，被列為台灣四大濕地之一，裡面包括鹽田、水道、運河、溝渠等，豐富的環境可供水鳥棲息與覓食。這裡的鳥類超過160種，其中有21種瀕臨絕種、稀有鳥類，如黑面琵鷺等。
+          {{scenic[0].DescriptionDetail}}
         </p>
       </v-col>
     </v-row>
@@ -99,6 +99,23 @@ export default {
   components: {
     Navbar,
     Footer,
+  },
+  data: () => ({
+    id: '',
+    scenic: {},
+  }),
+  methods: {
+    getScenicSpot() {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
+      vm.$http.get(api).then((response) => {
+        vm.scenic = response.data;
+      });
+    },
+  },
+  created() {
+    this.id = this.$route.params.id;
+    this.getScenicSpot();
   },
 };
 </script>
