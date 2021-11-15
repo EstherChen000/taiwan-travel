@@ -1,6 +1,6 @@
 <template>
   <v-app-bar flat height="80px" color="white">
-    <router-link to="/">
+    <router-link class="text-decoration-none" to="/">
       <div class="d-flex align-center">
         <v-img
           alt="Taiwan Travel Logo"

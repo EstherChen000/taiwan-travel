@@ -172,6 +172,7 @@ export default {
     keyWord: '',
     className: '',
     city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
+    cityEn: ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Keelung', 'Hsinchu', 'HsinchuCounty', 'MiaoliCounty', 'ChanghuaCounty', 'NantouCounty', 'YunlinCounty', 'ChiayiCounty', 'Chiayi', 'PingtungCounty', 'YilanCounty', 'HualienCounty', 'TaitungCounty', 'KinmenCounty', 'PenghuCounty', 'LienchiangCounty'],
   }),
   methods: {
     getScenicSpot() {
@@ -194,9 +195,10 @@ export default {
     },
     searchSpot() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=Description/any(d:(contains(d/Description/Zh-tw,'${vm.keyWord}')eq true))'&$top=30&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
         console.log(response);
+        console.log(vm.keyWord);
       });
     },
     getAuthorizationHeader() {
@@ -209,6 +211,13 @@ export default {
       const HMAC = ShaObj.getHMAC('B64');
       const authorization = 'hmac username="' + appID + '", algorithm="hmac-sha1", headers="x-date", signature="' + HMAC + '"';
       return { Authorization: authorization, 'x-date': GMTString };
+    },
+  },
+  computed: {
+    cityTranslate() {
+      const vm = this;
+      const a = vm.city.indexOf(vm.selectedCity);
+      return vm.cityEn[a];
     },
   },
   created() {
