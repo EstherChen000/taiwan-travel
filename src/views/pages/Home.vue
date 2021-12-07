@@ -28,6 +28,7 @@
                     hide-details="auto"
                     outlined
                     v-model="keyWord"
+                    :rules="[rules.required, rules.counter]"
                   ></v-text-field>
                 </v-col>
                 <v-col class="d-flex" cols="12" md="3" sm="3">
@@ -78,6 +79,7 @@
                     hide-details="auto"
                     outlined
                     v-model="keyWord"
+                    :rules="[rules.required, rules.counter]"
                   ></v-text-field>
                 </v-col>
                 <v-col class="d-flex" cols="12">
@@ -106,28 +108,28 @@
         <p class="text-h4 font-weight-bold mb-3">去哪玩?</p>
       </v-col>
       <v-col cols="12" sm="3">
-        <v-card class="rounded-lg"
+        <v-card class="rounded-lg" @click="searchCity('Tainan')"
           ><v-img class="white--text align-end" src="https://picsum.photos/266/252/?random=1"
             ><v-card-title class="text-h5 font-weight-bold">台南</v-card-title></v-img
           ></v-card
         >
       </v-col>
       <v-col cols="12" sm="3">
-        <v-card class="rounded-lg"
+        <v-card class="rounded-lg" @click="searchCity('PingtungCounty')"
           ><v-img class="white--text align-end" src="https://picsum.photos/266/252/?random=2"
             ><v-card-title class="text-h5 font-weight-bold">屏東</v-card-title></v-img
           ></v-card
         >
       </v-col>
       <v-col cols="12" sm="3">
-        <v-card class="rounded-lg"
+        <v-card class="rounded-lg" @click="searchCity('Chiayi')"
           ><v-img class="white--text align-end" src="https://picsum.photos/266/252/?random=3"
             ><v-card-title class="text-h5 font-weight-bold">嘉義</v-card-title></v-img
           ></v-card
         >
       </v-col>
       <v-col cols="12" sm="3">
-        <v-card class="rounded-lg"
+        <v-card class="rounded-lg" @click="searchCity('Kaohsiung')"
           ><v-img class="white--text align-end" src="https://picsum.photos/266/252/?random=4"
             ><v-card-title class="text-h5 font-weight-bold">高雄</v-card-title></v-img
           ></v-card
@@ -170,9 +172,17 @@ export default {
     scenic: [],
     selectedCity: '',
     keyWord: '',
-    className: '',
+    className: '不分類別',
     city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
     cityEn: ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Keelung', 'Hsinchu', 'HsinchuCounty', 'MiaoliCounty', 'ChanghuaCounty', 'NantouCounty', 'YunlinCounty', 'ChiayiCounty', 'Chiayi', 'PingtungCounty', 'YilanCounty', 'HualienCounty', 'TaitungCounty', 'KinmenCounty', 'PenghuCounty', 'LienchiangCounty'],
+    rules: {
+      required: (value) => !!value || '此欄不得為空',
+      counter: (value) => value.length <= 20 || 'Max 20 characters',
+      email: (value) => {
+        const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return pattern.test(value) || 'Invalid e-mail.';
+      },
+    },
   }),
   methods: {
     getScenicSpot() {
@@ -195,10 +205,37 @@ export default {
     },
     searchSpot() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.classNameTranslate}${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      if (vm.keyWord !== '' && vm.className !== '不分類別') {
+        vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+          console.log(response);
+          console.log(vm.keyWord);
+          if (response.data.length === 0) {
+            vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
+          } else {
+            vm.$router.push(`/SearchResult/result?class=${vm.classNameTranslate}&city=${vm.cityTranslate}&key=${vm.keyWord}`).catch(() => {});
+          }
+        }).catch(() => {});
+      } else if (vm.keyWord !== '' && vm.className === '不分類別') {
+        vm.$http.all([vm.getScenic(), vm.getRestaurant()])
+          .then(vm.$http.spread((acct, perms) => {
+            if (acct.data.length > 0 || perms.data.length > 0) {
+              console.log('有找到資料');
+              vm.$router.push(`/SearchResult/result?class=${vm.classNameTranslate}&city=${vm.cityTranslate}&key=${vm.keyWord}`);
+            } else {
+              console.log('沒有找到資料');
+              vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
+            }
+          }))
+          .catch(() => {});
+      }
+    },
+    searchCity(name) {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot/${name}?$format=JSON`;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
         console.log(response);
-        console.log(vm.keyWord);
+        vm.$router.push(`/SearchResult/result?city=${name}`);
       });
     },
     getAuthorizationHeader() {
@@ -212,12 +249,37 @@ export default {
       const authorization = 'hmac username="' + appID + '", algorithm="hmac-sha1", headers="x-date", signature="' + HMAC + '"';
       return { Authorization: authorization, 'x-date': GMTString };
     },
+    getScenic() {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      return vm.$http.get(api, { headers: vm.getAuthorizationHeader() });
+    },
+    getRestaurant() {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      return vm.$http.get(api, { headers: vm.getAuthorizationHeader() });
+    },
   },
   computed: {
     cityTranslate() {
       const vm = this;
       const a = vm.city.indexOf(vm.selectedCity);
-      return vm.cityEn[a];
+      if (vm.selectedCity === '') {
+        return '/';
+      }
+      return '/' + vm.cityEn[a];
+    },
+    classNameTranslate() {
+      const vm = this;
+      let result;
+      if (vm.className === '不分類別') {
+        result = '';
+      } else if (vm.className === '旅遊景點') {
+        result = 'ScenicSpot';
+      } else if (vm.className === '餐廳美食') {
+        result = 'Restaurant';
+      }
+      return result;
     },
   },
   created() {

@@ -3,12 +3,12 @@
     <Navbar></Navbar>
     <v-row>
       <v-col cols="12" sm="12">
-        <div class="text-h4 font-weight-bold">台南市
-          <span class="text-h5 font-weight-regular ml-4">共123個結果</span>
+        <div class="text-h4 font-weight-bold">{{keyWord || city}}
+          <span class="text-h5 font-weight-regular ml-4">共{{data.length}}個結果</span>
         </div>
       </v-col>
       <!-- view point < 600px 時不顯示 -->
-      <v-col cols="12" sm="3" class="d-none d-sm-flex">
+      <v-col cols="12" sm="3" class="d-none d-sm-flex flex-column">
         <div class="text-h6 font-weight-bold">景點類別</div>
         <v-checkbox label="旅遊"></v-checkbox>
         <v-checkbox class="mt-0" label="餐飲"></v-checkbox>
@@ -62,38 +62,20 @@
           </v-col>
         </v-dialog>
       </v-row>
-      <v-col cols="12" sm="9">
-        <v-card class="rounded-lg mb-6" outlined>
+      <v-col cols="12" sm="9" v-for="item in data" :key="item.ID">
+        <v-card @click="getScenicSpots(item.ID)" class="rounded-lg mb-6" outlined>
           <div class="d-flex flex-no-wrap justify-start">
             <div>
               <v-img class="rounded-tl-lg rounded-bl-lg"
-              src="https://picsum.photos/200/200/?random=3"></v-img>
+              :src="item.Picture.PictureUrl1" height="200px"></v-img>
             </div>
             <div>
               <v-card-text class="primary--text py-2">景點</v-card-text>
               <v-card-title class="font-weight-bold pt-0 pb-8 text-h5"
-                >四草野生動物保護區</v-card-title
+                >{{ item.Name }}</v-card-title
               >
               <v-card-text class="py-0 text-body-1">
-                <i class="fas fa-map-marker-alt mr-1"></i>台南市
-              </v-card-text>
-              <v-card-text class="py-4">遊憩類</v-card-text>
-            </div>
-          </div>
-        </v-card>
-        <v-card class="rounded-lg mb-6" outlined>
-          <div class="d-flex flex-no-wrap justify-star">
-            <div>
-              <v-img class="rounded-tl-lg rounded-bl-lg"
-              src="https://picsum.photos/200/200/?random=1"></v-img>
-            </div>
-            <div>
-              <v-card-text class="primary--text py-2">景點</v-card-text>
-              <v-card-title class="font-weight-bold pt-0 pb-8 text-h5"
-                >四草野生動物保護區</v-card-title
-              >
-              <v-card-text class="py-0 text-body-1">
-                <i class="fas fa-map-marker-alt mr-1"></i>台南市
+                <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
               </v-card-text>
               <v-card-text class="py-4">遊憩類</v-card-text>
             </div>
@@ -107,6 +89,7 @@
 </template>
 
 <script>
+import JsSHA from 'jssha';
 import Navbar from '../Navbar.vue';
 import Footer from '../Footer.vue';
 
@@ -118,7 +101,50 @@ export default {
   },
   data: () => ({
     dialog: false,
+    url: '',
+    city: '',
+    className: '',
+    keyWord: '',
+    data: [],
   }),
+  methods: {
+    getResult() {
+      const vm = this;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.className}${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+        console.log(response);
+        vm.data = response.data;
+      });
+    },
+    getScenicSpots(id) {
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
+      const vm = this;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
+        console.log(response);
+        console.log(id);
+        // vm.scenic = response.data;
+        vm.$router.push(`/scenePage/${id}`).catch(() => {});
+      });
+    },
+    getAuthorizationHeader() {
+      const appID = '4f650471c3a946078042df58395fa922';
+      const appKey = 'rMjx-NyfKoXX93I7ZTe59VjoEPM';
+      const GMTString = new Date().toGMTString();
+      const ShaObj = new JsSHA('SHA-1', 'TEXT');
+      ShaObj.setHMACKey(appKey, 'TEXT');
+      ShaObj.update(`x-date: ${GMTString}`);
+      const HMAC = ShaObj.getHMAC('B64');
+      const authorization = 'hmac username="' + appID + '", algorithm="hmac-sha1", headers="x-date", signature="' + HMAC + '"';
+      return { Authorization: authorization, 'x-date': GMTString };
+    },
+  },
+  created() {
+    // this.getParameter(this.$route.params.result);
+    this.city = this.$route.query.city;
+    this.className = this.$route.query.class;
+    this.keyWord = this.$route.query.key;
+    this.getResult();
+  },
 };
 </script>
 

@@ -10,7 +10,7 @@ const routes = [
     component: () => import('../views/pages/Home.vue'),
   },
   {
-    path: '/searchResult',
+    path: '/searchResult/:result',
     name: 'SearchResult',
     component: () => import('../views/pages/SearchResult.vue'),
   },
@@ -20,7 +20,7 @@ const routes = [
     component: () => import('../views/pages/ScenePage.vue'),
   },
   {
-    path: '/notFound',
+    path: '/notFound/:result',
     name: 'NotFound',
     component: () => import('../views/pages/NotFound.vue'),
   },

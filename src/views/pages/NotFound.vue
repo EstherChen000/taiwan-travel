@@ -3,7 +3,7 @@
     <Navbar></Navbar>
     <v-row class="mt-4 vh-80">
       <v-col cols="12" sm="12">
-        <div class="text-h4 font-weight-bold mb-8">“dfdfadfdsfdf”,台南市
+        <div class="text-h4 font-weight-bold mb-8">“{{ keyWord }}”,{{ city }}
           <span class="text-h5 font-weight-regular ml-4">共 0 個結果</span>
         </div>
         <div class="mb-4">找不到符合條件的結果</div>
@@ -30,6 +30,21 @@ export default {
   components: {
     Navbar,
     Footer,
+  },
+  data: () => ({
+    keyWord: '',
+    city: '',
+  }),
+  created() {
+    let result = '';
+    result = this.$route.params.result;
+    const [keyWord, city] = result.split('&');
+    this.keyWord = keyWord;
+    if (city === '') {
+      this.city = '不分縣市';
+    } else {
+      this.city = city;
+    }
   },
 };
 </script>

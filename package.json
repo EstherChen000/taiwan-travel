@@ -51,6 +51,7 @@
           "devDependencies": true
         }
       ],
+      "no-else-return": ["error", { "allowElseIf": true }],
       "quote-props": ["error", "as-needed", { "numbers": true }],
       "prefer-template": "off"
     }
