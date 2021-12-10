@@ -3,7 +3,7 @@
     <Navbar></Navbar>
     <v-row>
       <v-col cols="12" sm="12">
-        <div class="text-h4 font-weight-bold">{{keyWord || city}}
+        <div class="text-h4 font-weight-bold">{{city || keyWord}}
           <span class="text-h5 font-weight-regular ml-4">共{{data.length}}個結果</span>
         </div>
       </v-col>

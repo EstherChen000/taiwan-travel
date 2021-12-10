@@ -142,13 +142,14 @@
       </v-col>
       <v-col v-for="item in scenic" :key="item.ID" cols="12" sm="4">
         <v-card @click="getScenicSpots(item.ID)" class="rounded-lg" outlined>
-          <v-img :src="item.Picture.PictureUrl1" height="250px"></v-img>
+          <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2 || availableIme"
+          height="250px"></v-img>
           <v-card-text class="primary--text py-2">景點</v-card-text>
           <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
           <v-card-text class="py-0 text-body-1">
-            <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
+            <i class="fas fa-map-marker-alt mr-1 text-no-wrap"></i>{{ item.Address }}
           </v-card-text>
-          <v-card-text class="py-4">遊憩類</v-card-text>
+          <v-card-text class="py-4">{{ item.Class1 || item.Class2 || '其他' }}</v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -173,8 +174,7 @@ export default {
     selectedCity: '',
     keyWord: '',
     className: '不分類別',
-    city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
-    cityEn: ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Keelung', 'Hsinchu', 'HsinchuCounty', 'MiaoliCounty', 'ChanghuaCounty', 'NantouCounty', 'YunlinCounty', 'ChiayiCounty', 'Chiayi', 'PingtungCounty', 'YilanCounty', 'HualienCounty', 'TaitungCounty', 'KinmenCounty', 'PenghuCounty', 'LienchiangCounty'],
+    availableIme: 'https://picsum.photos/200/200/?random=4',
     rules: {
       required: (value) => !!value || '此欄不得為空',
       counter: (value) => value.length <= 20 || 'Max 20 characters',
@@ -183,13 +183,17 @@ export default {
         return pattern.test(value) || 'Invalid e-mail.';
       },
     },
+    city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
   }),
   methods: {
     getScenicSpot() {
-      const api = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$top=3&$format=JSON';
       const vm = this;
+      const max = 1000;
+      const min = 1;
+      const rand = Math.floor(Math.random() * (max - min + 1));
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$top=3&$skip=${rand}&$format=JSON`;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(response);
+        console.log(rand);
         vm.scenic = response.data;
       });
     },
@@ -263,11 +267,13 @@ export default {
   computed: {
     cityTranslate() {
       const vm = this;
-      const a = vm.city.indexOf(vm.selectedCity);
+      const city = ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'];
+      const cityEn = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Keelung', 'Hsinchu', 'HsinchuCounty', 'MiaoliCounty', 'ChanghuaCounty', 'NantouCounty', 'YunlinCounty', 'ChiayiCounty', 'Chiayi', 'PingtungCounty', 'YilanCounty', 'HualienCounty', 'TaitungCounty', 'KinmenCounty', 'PenghuCounty', 'LienchiangCounty'];
+      const a = city.indexOf(vm.selectedCity);
       if (vm.selectedCity === '') {
         return '/';
       }
-      return '/' + vm.cityEn[a];
+      return '/' + cityEn[a];
     },
     classNameTranslate() {
       const vm = this;

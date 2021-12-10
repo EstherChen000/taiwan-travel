@@ -53,7 +53,8 @@
       ],
       "no-else-return": ["error", { "allowElseIf": true }],
       "quote-props": ["error", "as-needed", { "numbers": true }],
-      "prefer-template": "off"
+      "prefer-template": "off",
+      "no-useless-escape": "off"
     }
   },
   "browserslist": [
