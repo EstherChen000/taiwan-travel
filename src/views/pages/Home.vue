@@ -22,14 +22,29 @@
                 <v-radio label="餐廳美食" value="餐廳美食"></v-radio>
               </v-radio-group>
               <v-row align="start">
-                <v-col class="d-flex" cols="12" md="6" sm="9">
+                <v-col class="d-flex position-relative" cols="12" md="6" sm="9">
                   <v-text-field
                     label="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
                     v-model="keyWord"
                     :rules="[rules.required, rules.counter]"
-                  ></v-text-field>
+                  >
+                  </v-text-field>
+                  <div class="tips-position">
+                    <div class="d-flex flex-column">
+                      <v-card height="300" class="overflow-auto">
+                        <v-list>
+                          <v-list-item-group color="primary">
+                            <v-list-item v-for="(item, i) in keyWordFilter" :key="i"
+                            @click="goTo(item)">
+                              {{item}}
+                            </v-list-item>
+                          </v-list-item-group>
+                        </v-list>
+                      </v-card>
+                    </div>
+                  </div>
                 </v-col>
                 <v-col class="d-flex" cols="12" md="3" sm="3">
                   <v-select label="不分縣市" outlined :items="city" v-model="selectedCity"></v-select>
@@ -81,6 +96,20 @@
                     v-model="keyWord"
                     :rules="[rules.required, rules.counter]"
                   ></v-text-field>
+                  <div class="tips-position">
+                    <div class="d-flex flex-column">
+                      <v-card height="300" class="overflow-auto">
+                        <v-list>
+                          <v-list-item-group color="primary">
+                            <v-list-item v-for="(item, i) in keyWordFilter" :key="i"
+                            @click="goTo(item)">
+                              {{item}}
+                            </v-list-item>
+                          </v-list-item-group>
+                        </v-list>
+                      </v-card>
+                    </div>
+                  </div>
                 </v-col>
                 <v-col class="d-flex" cols="12">
                   <v-select label="不分縣市" outlined :items="city" v-model="selectedCity"></v-select>
@@ -146,8 +175,8 @@
           height="250px"></v-img>
           <v-card-text class="primary--text py-2">景點</v-card-text>
           <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
-          <v-card-text class="py-0 text-body-1">
-            <i class="fas fa-map-marker-alt mr-1 text-no-wrap"></i>{{ item.Address }}
+          <v-card-text class="py-0 text-body-1 text-no-wrap">
+            <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
           </v-card-text>
           <v-card-text class="py-4">{{ item.Class1 || item.Class2 || '其他' }}</v-card-text>
         </v-card>
@@ -177,13 +206,9 @@ export default {
     availableIme: 'https://picsum.photos/200/200/?random=4',
     rules: {
       required: (value) => !!value || '此欄不得為空',
-      counter: (value) => value.length <= 20 || 'Max 20 characters',
-      email: (value) => {
-        const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return pattern.test(value) || 'Invalid e-mail.';
-      },
     },
     city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
+    list: [],
   }),
   methods: {
     getScenicSpot() {
@@ -263,6 +288,36 @@ export default {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
       return vm.$http.get(api, { headers: vm.getAuthorizationHeader() });
     },
+    getAll() {
+      const vm = this;
+      const api1 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$select=Name%2CID&$format=JSON';
+      const api2 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$select=Name%2CID&$format=JSON';
+      const fnScenic = function () {
+        return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
+      };
+      const fnRestaurant = function () {
+        return vm.$http.get(api2, { headers: vm.getAuthorizationHeader() });
+      };
+      vm.$http.all([fnScenic(), fnRestaurant()])
+        .then(vm.$http.spread((acct, perms) => {
+        // console.log(res.data.length);
+          vm.list = acct.data.concat(perms.data);
+        })).catch(() => {});
+    },
+    goTo(item) {
+      const vm = this;
+      vm.list.forEach((e, i, a) => {
+        const file = ['ID', 'Name'];
+        file.forEach((f) => {
+          if (e[f].includes(item) && vm.keyWord !== '') {
+            const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${a[i].ID}'&$format=JSON`;
+            vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+              vm.$router.push(`/scenePage/${a[i].ID}`).catch(() => {});
+            });
+          }
+        });
+      });
+    },
   },
   computed: {
     cityTranslate() {
@@ -287,9 +342,23 @@ export default {
       }
       return result;
     },
+    keyWordFilter() {
+      const vm = this;
+      const result = [];
+      vm.list.forEach((e) => {
+        const file = ['ID', 'Name'];
+        file.forEach((f) => {
+          if (e[f].includes(vm.keyWord) && vm.keyWord !== '') {
+            result.push(e[f]);
+          }
+        });
+      });
+      return result;
+    },
   },
   created() {
     this.getScenicSpot();
+    this.getAll();
   },
 };
 </script>
@@ -298,6 +367,16 @@ export default {
 .searchbar-position {
   position: relative;
   top: -100px;
+}
+.tips-position {
+  position: absolute;
+  top: 170px;
+  z-index: 100;
+}
+@media (max-width:600px) {
+  .tips-position {
+    top: 220px;
+  }
 }
 .w-100 {
   width: 100%;

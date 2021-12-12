@@ -94,12 +94,23 @@ export default {
   methods: {
     getScenicSpot() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
-      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        vm.scenic = response.data;
-        vm.selectedCity = response.data[0].City;
-        vm.getRestaurant();
-      });
+      const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
+      const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
+      const code1 = /C1_\w+/;
+      const code2 = /C3_\w+/;
+      if (vm.id.match(code1)) {
+        vm.$http.get(api1, { headers: vm.getAuthorizationHeader() }).then((response) => {
+          vm.scenic = response.data;
+          vm.selectedCity = response.data[0].City;
+          vm.getRestaurant();
+        });
+      } else if (vm.id.match(code2)) {
+        vm.$http.get(api2, { headers: vm.getAuthorizationHeader() }).then((response) => {
+          vm.scenic = response.data;
+          vm.selectedCity = response.data[0].City;
+          vm.getRestaurant();
+        });
+      }
     },
     getRestaurant() {
       const vm = this;
