@@ -22,7 +22,7 @@
       <v-col cols="12" sm="6" class="d-flex d-sm-none">
         <v-img class="rounded-lg" height="300px"
         :src="scenic[0].Picture.PictureUrl1 || scenic[0].Picture.PictureUrl2
-        || availableIme"></v-img>
+        || availableImg"></v-img>
       </v-col>
       <v-col cols="12" sm="6" class="d-flex d-sm-none flex-column">
         <p class="py-0 text-body-1">
@@ -39,7 +39,7 @@
       <v-col cols="12" sm="6" class="d-none d-sm-flex">
         <v-img class="rounded-lg" height="300px"
         :src="scenic[0].Picture.PictureUrl1 || scenic[0].Picture.PictureUrl2
-        || availableIme"></v-img>
+        || availableImg"></v-img>
       </v-col>
     </v-row>
     <v-row>
@@ -59,7 +59,7 @@
       <v-col cols="12" sm="4" v-for="item in getRestaurantThree" :key="item.ID">
         <v-card @click="getRestaurants(item.ID)" class="rounded-lg" outlined height="400px">
           <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2
-          || availableIme"
+          || availableImg"
           height="250px"></v-img>
           <v-card-text class="primary--text py-2">餐飲</v-card-text>
           <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
@@ -89,7 +89,7 @@ export default {
     scenic: {},
     restaurant: [],
     selectedCity: '',
-    availableIme: 'https://picsum.photos/200/200/?random=4',
+    availableImg: 'https://picsum.photos/200/200/?random=4',
   }),
   methods: {
     getScenicSpot() {
@@ -116,13 +116,8 @@ export default {
       const vm = this;
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.cityTranslate}?$format=JSON`;
       const regex = /[0-9]/ig;
-      // const regex = `/${vm.selectedCity}/ig`;
       const addressSpot = vm.scenic[0].Address.replace(vm.selectedCity, '').replace(regex, '').slice(0, 3);
-      console.log(addressSpot);
-      // console.log(regex);
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        // const max = response.data.length;
-        console.log(response);
         response.data.forEach((e) => {
           if (e.Address.includes(addressSpot)) {
             vm.restaurant.push(e);
@@ -136,12 +131,8 @@ export default {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ID%20eq%20'${id}'&$format=JSON`;
       const vm = this;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(response);
-        console.log(id);
         vm.scenic = response.data;
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
-        // vm.getScenicSpot();
-        // vm.$forceUpdate();
       });
     },
     getAuthorizationHeader() {
@@ -180,12 +171,6 @@ export default {
       });
       return arr;
     },
-    // getRestaurantThreeImgChecker(id) {
-    //   const vm = this;
-    //   vm.getRestaurantThree.forEach((e) => {
-    //     if (e.Picture) {}
-    //   });
-    // },
   },
   created() {
     this.id = this.$route.params.id;

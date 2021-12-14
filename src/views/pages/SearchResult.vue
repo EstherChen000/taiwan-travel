@@ -3,7 +3,7 @@
     <Navbar></Navbar>
     <v-row>
       <v-col cols="12" sm="12">
-        <div class="text-h4 font-weight-bold">{{city || keyWord}}
+        <div class="text-h4 font-weight-bold">{{city === '/' ? keyWord : city}}
           <span class="text-h5 font-weight-regular ml-4">共{{data.length}}個結果</span>
         </div>
       </v-col>
@@ -13,9 +13,9 @@
         <v-checkbox label="旅遊" value="旅遊" v-model="selected"></v-checkbox>
         <v-checkbox class="mt-0" label="餐飲" value="餐飲" v-model="selected"></v-checkbox>
         <div class="text-h6 font-weight-bold">相關類別</div>
-        <v-checkbox label="遊憩類"></v-checkbox>
-        <v-checkbox class="mt-0" label="觀光工廠類"></v-checkbox>
-        <v-checkbox class="mt-0" label="其他"></v-checkbox>
+          <div v-for="(val, key) in aboutSelecte" :key="key">
+            <v-checkbox :label="val" :value="val" v-model="aboutSelected"></v-checkbox>
+          </div>
       </v-col>
       <!-- view point < 600px 顯示 -->
       <v-row class="d-flex d-sm-none">
@@ -50,12 +50,12 @@
                 >
                 <v-col cols="12">
                   <div class="text-h6 font-weight-bold">景點類別</div>
-                  <v-checkbox label="旅遊"></v-checkbox>
-                  <v-checkbox class="mt-0" label="餐飲"></v-checkbox>
+                  <v-checkbox label="旅遊" value="旅遊" v-model="selected"></v-checkbox>
+                  <v-checkbox class="mt-0" label="餐飲" value="餐飲" v-model="selected"></v-checkbox>
                   <div class="text-h6 font-weight-bold">相關類別</div>
-                  <v-checkbox label="遊憩類"></v-checkbox>
-                  <v-checkbox class="mt-0" label="觀光工廠類"></v-checkbox>
-                  <v-checkbox class="mt-0" label="其他"></v-checkbox>
+                  <div v-for="(val, key) in aboutSelecte" :key="key">
+                    <v-checkbox :label="val" :value="val" v-model="aboutSelected"></v-checkbox>
+                  </div>
                 </v-col>
               </v-row>
             </v-sheet>
@@ -68,7 +68,7 @@
           <div class="d-flex flex-no-wrap justify-start">
             <div>
               <v-img class="rounded-tl-lg rounded-bl-lg"
-              :src="item.Picture.PictureUrl1 || availableIme" height="200px" width="200px"></v-img>
+              :src="item.Picture.PictureUrl1 || availableImg" height="200px" width="200px"></v-img>
             </div>
             <div>
               <v-card-text class="primary--text py-2">景點</v-card-text>
@@ -109,31 +109,50 @@ export default {
     keyWord: '',
     data: [],
     selected: ['旅遊', '餐飲'],
+    aboutSelecte: [],
+    aboutSelected: [],
     page: 1,
     pages: 3,
     count: 30,
-    availableIme: 'https://picsum.photos/200/200/?random=4',
+    availableImg: 'https://picsum.photos/200/200/?random=4',
   }),
   methods: {
     getResult() {
       const vm = this;
-      if (vm.className === undefined && vm.keyWord === undefined) {
-        const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot/${vm.city}?$format=JSON`;
+      if (vm.className === undefined) {
+        const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.city}?$filter=Name%20eq%20${vm.keyWord}'&$format=JSON`;
+        const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+        const fnScenic = function fnScenic() {
+          return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
+        };
+        const fnRestaurant = function fnRestaurant() {
+          return vm.$http.get(api2, { headers: vm.getAuthorizationHeader() });
+        };
+        vm.$http.all([fnScenic(), fnRestaurant()])
+          .then(vm.$http.spread((acct, perms) => {
+            vm.data = acct.data.concat(perms.data);
+            vm.findClass();
+          })).catch(() => {});
+        vm.pages = Math.ceil(vm.data.length / vm.count);
+        vm.selected = ['旅遊', '餐飲'];
+      } else if (vm.className !== undefined) {
+        const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.className}${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
         vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-          console.log(response);
           vm.data = response.data;
+          vm.findClass();
           vm.pages = Math.ceil(vm.data.length / vm.count);
+          if (vm.className === 'ScenicSpot') {
+            vm.selected = ['旅遊'];
+          } else {
+            vm.selected = ['餐飲'];
+          }
         });
-        vm.className = '旅遊景點';
       }
     },
     getScenicSpots(id) {
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$format=JSON`;
       const vm = this;
-      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(response);
-        console.log(id);
-        // vm.scenic = response.data;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
       });
     },
@@ -147,6 +166,26 @@ export default {
       const HMAC = ShaObj.getHMAC('B64');
       const authorization = 'hmac username="' + appID + '", algorithm="hmac-sha1", headers="x-date", signature="' + HMAC + '"';
       return { Authorization: authorization, 'x-date': GMTString };
+    },
+    findClass() {
+      const vm = this;
+      const className = [];
+      vm.data.forEach((e) => {
+        const keyNameArr = Object.keys(e);
+        const classList = [];
+        keyNameArr.forEach((f) => {
+          if (f.includes('Class')) {
+            classList.push(f);
+          }
+        });
+        classList.forEach((g) => {
+          className.push(e[g]);
+        });
+      });
+      vm.aboutSelecte = className.filter((h, i) => (
+        className.indexOf(h) === i
+      ));
+      vm.aboutSelected = vm.aboutSelecte;
     },
   },
   computed: {
@@ -162,7 +201,6 @@ export default {
     },
   },
   created() {
-    // this.getParameter(this.$route.params.result);
     this.city = this.$route.query.city;
     this.className = this.$route.query.class;
     this.keyWord = this.$route.query.key;

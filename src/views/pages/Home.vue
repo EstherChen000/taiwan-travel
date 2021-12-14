@@ -25,10 +25,11 @@
                 <v-col class="d-flex position-relative" cols="12" md="6" sm="9">
                   <v-text-field
                     label="輸入關鍵字(必填)"
+                    placeholder="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
                     v-model="keyWord"
-                    :rules="[rules.required, rules.counter]"
+                    :rules="[rules.required]"
                   >
                   </v-text-field>
                   <div class="tips-position">
@@ -69,6 +70,7 @@
                 <v-col cols="8">
                   <v-text-field
                     label="輸入關鍵字(必填)"
+                    placeholder="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
                     v-bind="attrs"
@@ -91,10 +93,11 @@
                 <v-col class="d-flex" cols="12">
                   <v-text-field
                     label="輸入關鍵字(必填)"
+                    placeholder="輸入關鍵字(必填)"
                     hide-details="auto"
                     outlined
                     v-model="keyWord"
-                    :rules="[rules.required, rules.counter]"
+                    :rules="[rules.required]"
                   ></v-text-field>
                   <div class="tips-position">
                     <div class="d-flex flex-column">
@@ -171,11 +174,14 @@
       </v-col>
       <v-col v-for="item in scenic" :key="item.ID" cols="12" sm="4">
         <v-card @click="getScenicSpots(item.ID)" class="rounded-lg" outlined>
-          <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2 || availableIme"
+          <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2 ||
+            item.Picture.PictureUrl3 || availableImg"
           height="250px"></v-img>
           <v-card-text class="primary--text py-2">景點</v-card-text>
-          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
-          <v-card-text class="py-0 text-body-1 text-no-wrap">
+          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5 text-truncate">
+            {{ item.Name }}
+          </v-card-title>
+          <v-card-text class="py-0 text-body-1 text-truncate">
             <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
           </v-card-text>
           <v-card-text class="py-4">{{ item.Class1 || item.Class2 || '其他' }}</v-card-text>
@@ -203,7 +209,7 @@ export default {
     selectedCity: '',
     keyWord: '',
     className: '不分類別',
-    availableIme: 'https://picsum.photos/200/200/?random=4',
+    availableImg: 'https://picsum.photos/200/200/?random=4',
     rules: {
       required: (value) => !!value || '此欄不得為空',
     },
@@ -213,22 +219,25 @@ export default {
   methods: {
     getScenicSpot() {
       const vm = this;
-      const max = 1000;
+      const max = 5000;
       const min = 1;
       const rand = Math.floor(Math.random() * (max - min + 1));
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$top=3&$skip=${rand}&$format=JSON`;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(rand);
-        vm.scenic = response.data;
+        const isImg = response.data.every((e) => (
+          !e.Picture.PictureUrl1 && !e.Picture.PictureUrl2 && !e.Picture.PictureUrl3
+        ));
+        if (isImg) {
+          vm.getScenicSpot();
+        } else {
+          vm.scenic = response.data;
+        }
       });
     },
     getScenicSpots(id) {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
       const vm = this;
-      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(response);
-        console.log(id);
-        // vm.scenic = response.data;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
       });
     },
@@ -237,8 +246,6 @@ export default {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.classNameTranslate}${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
       if (vm.keyWord !== '' && vm.className !== '不分類別') {
         vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-          console.log(response);
-          console.log(vm.keyWord);
           if (response.data.length === 0) {
             vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
           } else {
@@ -249,10 +256,8 @@ export default {
         vm.$http.all([vm.getScenic(), vm.getRestaurant()])
           .then(vm.$http.spread((acct, perms) => {
             if (acct.data.length > 0 || perms.data.length > 0) {
-              console.log('有找到資料');
               vm.$router.push(`/SearchResult/result?class=${vm.classNameTranslate}&city=${vm.cityTranslate}&key=${vm.keyWord}`);
             } else {
-              console.log('沒有找到資料');
               vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
             }
           }))
@@ -262,8 +267,7 @@ export default {
     searchCity(name) {
       const vm = this;
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot/${name}?$format=JSON`;
-      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
-        console.log(response);
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
         vm.$router.push(`/SearchResult/result?city=${name}`);
       });
     },
@@ -292,15 +296,14 @@ export default {
       const vm = this;
       const api1 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$select=Name%2CID&$format=JSON';
       const api2 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$select=Name%2CID&$format=JSON';
-      const fnScenic = function () {
+      const fnScenic = function fnScenic() {
         return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
       };
-      const fnRestaurant = function () {
+      const fnRestaurant = function fnRestaurant() {
         return vm.$http.get(api2, { headers: vm.getAuthorizationHeader() });
       };
       vm.$http.all([fnScenic(), fnRestaurant()])
         .then(vm.$http.spread((acct, perms) => {
-        // console.log(res.data.length);
           vm.list = acct.data.concat(perms.data);
         })).catch(() => {});
     },
