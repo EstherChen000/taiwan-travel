@@ -4,7 +4,7 @@
     <v-row>
       <v-col cols="12" sm="12">
         <div class="text-h4 font-weight-bold">{{city === '/' ? keyWord : city}}
-          <span class="text-h5 font-weight-regular ml-4">共{{data.length}}個結果</span>
+          <span class="text-h5 font-weight-regular ml-4">共{{num}}個結果</span>
         </div>
       </v-col>
       <!-- view point < 600px 時不顯示 -->
@@ -71,14 +71,14 @@
               :src="item.Picture.PictureUrl1 || availableImg" height="200px" width="200px"></v-img>
             </div>
             <div>
-              <v-card-text class="primary--text py-2">景點</v-card-text>
+              <v-card-text class="primary--text py-2">{{ getType(item.ID)}}</v-card-text>
               <v-card-title class="font-weight-bold pt-0 pb-8 text-h5"
                 >{{ item.Name }}</v-card-title
               >
               <v-card-text class="py-0 text-body-1">
                 <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
               </v-card-text>
-              <v-card-text class="py-4">{{ item.Class1 || item.Class2 || '其他' }}</v-card-text>
+              <v-card-text class="py-4">{{ getClass(item) }}</v-card-text>
             </div>
           </div>
         </v-card>
@@ -114,13 +114,14 @@ export default {
     page: 1,
     pages: 3,
     count: 30,
+    num: 0,
     availableImg: 'https://picsum.photos/200/200/?random=4',
   }),
   methods: {
     getResult() {
       const vm = this;
-      if (vm.className === undefined) {
-        const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.city}?$filter=Name%20eq%20${vm.keyWord}'&$format=JSON`;
+      if (vm.className === '' && vm.keyWord !== undefined) {
+        const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
         const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
         const fnScenic = function fnScenic() {
           return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
@@ -132,10 +133,10 @@ export default {
           .then(vm.$http.spread((acct, perms) => {
             vm.data = acct.data.concat(perms.data);
             vm.findClass();
+            vm.pages = Math.ceil(vm.data.length / vm.count);
           })).catch(() => {});
-        vm.pages = Math.ceil(vm.data.length / vm.count);
         vm.selected = ['旅遊', '餐飲'];
-      } else if (vm.className !== undefined) {
+      } else if (vm.className !== '' && vm.className !== undefined) {
         const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.className}${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
         vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
           vm.data = response.data;
@@ -147,6 +148,22 @@ export default {
             vm.selected = ['餐飲'];
           }
         });
+      } else if (vm.keyWord === undefined && vm.className === undefined) {
+        const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot/${vm.city}?$format=JSON`;
+        const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant/${vm.city}?$format=JSON`;
+        const fnScenic = function fnScenic() {
+          return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
+        };
+        const fnRestaurant = function fnRestaurant() {
+          return vm.$http.get(api2, { headers: vm.getAuthorizationHeader() });
+        };
+        vm.$http.all([fnScenic(), fnRestaurant()])
+          .then(vm.$http.spread((acct, perms) => {
+            vm.data = acct.data.concat(perms.data);
+            vm.findClass();
+            vm.pages = Math.ceil(vm.data.length / vm.count);
+          })).catch(() => {});
+        vm.selected = ['旅遊', '餐飲'];
       }
     },
     getScenicSpots(id) {
@@ -182,19 +199,81 @@ export default {
           className.push(e[g]);
         });
       });
-      vm.aboutSelecte = className.filter((h, i) => (
-        className.indexOf(h) === i
+      if (className.length > 0) {
+        vm.aboutSelecte = className.filter((h, i) => (
+          className.indexOf(h) === i
+        ));
+        vm.aboutSelected = vm.aboutSelecte;
+      } else {
+        vm.aboutSelecte = ['其他'];
+        vm.aboutSelected = vm.aboutSelecte;
+      }
+    },
+    getType(id) {
+      let result;
+      if (id.indexOf('C1') !== -1 || id.indexOf('C2') !== -1) {
+        result = '景點';
+      } else {
+        result = '餐飲';
+      }
+      return result;
+    },
+    getClass(item) {
+      let result = '';
+      const keyNameArr = Object.keys(item);
+      const fitKeyNameArr = keyNameArr.filter((g) => (
+        g.includes('Class')
       ));
-      vm.aboutSelected = vm.aboutSelecte;
+      if (fitKeyNameArr.length === 0) {
+        result = '其他';
+      } else {
+        fitKeyNameArr.forEach((h) => {
+          result += `${item[h]} `;
+        });
+      }
+      return result;
     },
   },
   computed: {
     viewData() {
       const vm = this;
-      const arr = [];
-      vm.data.forEach((e, index) => {
-        if (index >= vm.count * (vm.page - 1) && index < vm.count * vm.page) {
+      let arr = [];
+      vm.data.forEach((e) => {
+        const keyNameArr = Object.keys(e);
+        const fitKeyNameArr = keyNameArr.filter((g) => (
+          g.includes('Class')
+        ));
+        if (fitKeyNameArr.length > 0) {
+          vm.selectedTranslate.forEach((s) => {
+            vm.aboutSelected.forEach((f) => {
+              fitKeyNameArr.forEach((h) => {
+                if (e[h] === f && e.ID.includes(s)) {
+                  arr.push(e);
+                }
+              });
+            });
+          });
+        } else if (vm.aboutSelecte.length > 0 && fitKeyNameArr.length === 0) {
           arr.push(e);
+        }
+      });
+      arr = arr.filter((i, j) => (
+        arr.indexOf(i) === j
+      ));
+      vm.num = arr.length;
+      arr = arr.filter((element, index) => (
+        index >= vm.count * (vm.page - 1) && index < vm.count * vm.page
+      ));
+      return arr;
+    },
+    selectedTranslate() {
+      const vm = this;
+      const arr = [];
+      vm.selected.forEach((e) => {
+        if (e === '旅遊') {
+          arr.push('C1_');
+        } else if (e === '餐飲') {
+          arr.push('C3_');
         }
       });
       return arr;
