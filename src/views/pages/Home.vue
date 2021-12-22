@@ -1,5 +1,6 @@
 <template>
   <v-container>
+    <loading :active.sync="isLoading"></loading>
     <Navbar></Navbar>
     <div class="position-relative">
       <v-carousel hide-delimiters :show-arrows="false" height="360px" class="rounded-lg">
@@ -125,7 +126,8 @@
                   </v-radio-group>
                 </v-col>
                 <v-col class="d-flex" cols="12">
-                  <v-btn class="mr-4 w-100 black--text text-h6" depressed color="primary" x-large>
+                  <v-btn class="mr-4 w-100 black--text text-h6"
+                  @click="searchSpot" depressed color="primary" x-large>
                     搜尋
                   </v-btn>
                 </v-col>
@@ -215,6 +217,7 @@ export default {
     },
     city: ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '嘉義市', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '金門縣', '澎湖縣', '連江縣'],
     list: [],
+    isLoading: false,
   }),
   methods: {
     getScenicSpot() {
@@ -223,6 +226,7 @@ export default {
       const min = 1;
       const rand = Math.floor(Math.random() * (max - min + 1));
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$top=3&$skip=${rand}&$format=JSON`;
+      vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
         const isImg = response.data.every((e) => (
           !e.Picture.PictureUrl1 && !e.Picture.PictureUrl2 && !e.Picture.PictureUrl3
@@ -231,24 +235,30 @@ export default {
           vm.getScenicSpot();
         } else {
           vm.scenic = response.data;
+          vm.isLoading = false;
         }
       });
     },
     getScenicSpots(id) {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
       const vm = this;
+      vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+        vm.isLoading = false;
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
       });
     },
     searchSpot() {
       const vm = this;
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.classNameTranslate}${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      vm.isLoading = true;
       if (vm.keyWord !== '' && vm.className !== '不分類別') {
         vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
           if (response.data.length === 0) {
+            vm.isLoading = false;
             vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
           } else {
+            vm.isLoading = false;
             vm.$router.push(`/SearchResult/result?class=${vm.classNameTranslate}&city=${vm.cityTranslate}&key=${vm.keyWord}`).catch(() => {});
           }
         }).catch(() => {});
@@ -256,8 +266,10 @@ export default {
         vm.$http.all([vm.getScenic(), vm.getRestaurant()])
           .then(vm.$http.spread((acct, perms) => {
             if (acct.data.length > 0 || perms.data.length > 0) {
+              vm.isLoading = false;
               vm.$router.push(`/SearchResult/result?class=${vm.classNameTranslate}&city=${vm.cityTranslate}&key=${vm.keyWord}`);
             } else {
+              vm.isLoading = false;
               vm.$router.push(`/NotFound/${vm.keyWord}&${vm.selectedCity}`).catch(() => {});
             }
           }))
@@ -267,7 +279,9 @@ export default {
     searchCity(name) {
       const vm = this;
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot/${name}?$format=JSON`;
+      vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+        vm.isLoading = false;
         vm.$router.push(`/SearchResult/result?city=${name}`);
       });
     },
@@ -302,9 +316,11 @@ export default {
       const fnRestaurant = function fnRestaurant() {
         return vm.$http.get(api2, { headers: vm.getAuthorizationHeader() });
       };
+      vm.isLoading = true;
       vm.$http.all([fnScenic(), fnRestaurant()])
         .then(vm.$http.spread((acct, perms) => {
           vm.list = acct.data.concat(perms.data);
+          vm.isLoading = false;
         })).catch(() => {});
     },
     goTo(item) {

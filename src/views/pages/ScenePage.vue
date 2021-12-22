@@ -1,5 +1,6 @@
 <template>
   <v-container style="max-width: 1136px">
+    <loading :active.sync="isLoading"></loading>
     <Navbar></Navbar>
     <v-row class="d-flex flex-no-wrap justify-space-between w-100 mt-6">
       <v-col cols="12" sm="6">
@@ -90,6 +91,7 @@ export default {
     restaurant: [],
     selectedCity: '',
     availableImg: 'https://picsum.photos/200/200/?random=4',
+    isLoading: false,
   }),
   methods: {
     getScenicSpot() {
@@ -98,6 +100,7 @@ export default {
       const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
       const code1 = /C1_\w+/;
       const code2 = /C3_\w+/;
+      vm.isLoading = true;
       if (vm.id.match(code1)) {
         vm.$http.get(api1, { headers: vm.getAuthorizationHeader() }).then((response) => {
           vm.scenic = response.data;
@@ -125,6 +128,7 @@ export default {
             vm.restaurant.push(e);
           }
         });
+        vm.isLoading = false;
       });
     },
     getRestaurants(id) {
@@ -155,6 +159,10 @@ export default {
       const a = city.indexOf(vm.selectedCity);
       if (vm.selectedCity === '') {
         return '/';
+      } else if (vm.selectedCity === undefined) {
+        const addressSpot = vm.scenic[0].Address.slice(0, 3);
+        const b = city.indexOf(addressSpot);
+        return '/' + cityEn[b];
       }
       return '/' + cityEn[a];
     },

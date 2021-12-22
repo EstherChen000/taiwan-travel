@@ -1,5 +1,6 @@
 <template>
   <v-container style="max-width: 1136px">
+    <loading :active.sync="isLoading"></loading>
     <Navbar></Navbar>
     <v-row>
       <v-col cols="12" sm="12">
@@ -41,7 +42,7 @@
             </v-col>
           </template>
           <v-col cols="12">
-            <v-sheet class="pa-4 vh-80">
+            <v-sheet class="pa-4 h-auto">
               <v-row align="center">
                 <v-col class="d-flex align-start" cols="12"
                   ><v-btn color="grey darken-1" icon @click="dialog = false"
@@ -116,10 +117,12 @@ export default {
     count: 30,
     num: 0,
     availableImg: 'https://picsum.photos/200/200/?random=4',
+    isLoading: false,
   }),
   methods: {
     getResult() {
       const vm = this;
+      vm.isLoading = true;
       if (vm.className === '' && vm.keyWord !== undefined) {
         const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
         const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.city}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
@@ -134,6 +137,7 @@ export default {
             vm.data = acct.data.concat(perms.data);
             vm.findClass();
             vm.pages = Math.ceil(vm.data.length / vm.count);
+            vm.isLoading = false;
           })).catch(() => {});
         vm.selected = ['旅遊', '餐飲'];
       } else if (vm.className !== '' && vm.className !== undefined) {
@@ -142,6 +146,7 @@ export default {
           vm.data = response.data;
           vm.findClass();
           vm.pages = Math.ceil(vm.data.length / vm.count);
+          vm.isLoading = false;
           if (vm.className === 'ScenicSpot') {
             vm.selected = ['旅遊'];
           } else {
@@ -162,6 +167,7 @@ export default {
             vm.data = acct.data.concat(perms.data);
             vm.findClass();
             vm.pages = Math.ceil(vm.data.length / vm.count);
+            vm.isLoading = false;
           })).catch(() => {});
         vm.selected = ['旅遊', '餐飲'];
       }
@@ -169,7 +175,9 @@ export default {
     getScenicSpots(id) {
       const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$format=JSON`;
       const vm = this;
+      vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+        vm.isLoading = false;
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
       });
     },
@@ -253,7 +261,8 @@ export default {
               });
             });
           });
-        } else if (vm.aboutSelecte.length > 0 && fitKeyNameArr.length === 0) {
+        } else if (vm.aboutSelecte.length > 0 && fitKeyNameArr.length === 0
+        && vm.otherChecker === true) {
           arr.push(e);
         }
       });
@@ -261,6 +270,7 @@ export default {
         arr.indexOf(i) === j
       ));
       vm.num = arr.length;
+      vm.pages = Math.ceil(arr.length / vm.count);
       arr = arr.filter((element, index) => (
         index >= vm.count * (vm.page - 1) && index < vm.count * vm.page
       ));
@@ -278,6 +288,13 @@ export default {
       });
       return arr;
     },
+    otherChecker() {
+      const vm = this;
+      if (vm.aboutSelected.includes('其他')) {
+        return true;
+      }
+      return false;
+    },
   },
   created() {
     this.city = this.$route.query.city;
@@ -294,5 +311,8 @@ export default {
 }
 .vh-80 {
   height: 80vh;
+}
+.h-auto {
+  height: auto;
 }
 </style>
