@@ -181,7 +181,7 @@
           height="250px"></v-img>
           <v-card-text class="primary--text py-2">景點</v-card-text>
           <v-card-title class="font-weight-bold pt-0 pb-8 text-h5 text-truncate">
-            {{ item.Name }}
+            {{ item.ScenicSpotName }}
           </v-card-title>
           <v-card-text class="py-0 text-body-1 text-truncate">
             <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
@@ -240,7 +240,7 @@ export default {
       });
     },
     getScenicSpots(id) {
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$top=30&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ScenicSpotID%20eq%20'${id}'&$top=30&$format=JSON`;
       const vm = this;
       vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
@@ -250,7 +250,7 @@ export default {
     },
     searchSpot() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.classNameTranslate}${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/${vm.classNameTranslate}${vm.cityTranslate}?$filter=${vm.nameTranslate}%20eq%20'${vm.keyWord}'&$format=JSON`;
       vm.isLoading = true;
       if (vm.keyWord !== '' && vm.className !== '不分類別') {
         vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
@@ -298,18 +298,18 @@ export default {
     },
     getScenic() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot${vm.cityTranslate}?$filter=ScenicSpotName%20eq%20'${vm.keyWord}'&$format=JSON`;
       return vm.$http.get(api, { headers: vm.getAuthorizationHeader() });
     },
     getRestaurant() {
       const vm = this;
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.cityTranslate}?$filter=Name%20eq%20'${vm.keyWord}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant${vm.cityTranslate}?$filter=RestaurantName%20eq%20'${vm.keyWord}'&$format=JSON`;
       return vm.$http.get(api, { headers: vm.getAuthorizationHeader() });
     },
     getAll() {
       const vm = this;
-      const api1 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$select=Name%2CID&$format=JSON';
-      const api2 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$select=Name%2CID&$format=JSON';
+      const api1 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$select=ScenicSpotName%2CScenicSpotID&$format=JSON';
+      const api2 = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$select=RestaurantName%2CRestaurantID&$format=JSON';
       const fnScenic = function fnScenic() {
         return vm.$http.get(api1, { headers: vm.getAuthorizationHeader() });
       };
@@ -326,15 +326,17 @@ export default {
     goTo(item) {
       const vm = this;
       vm.list.forEach((e, i, a) => {
-        const file = ['ID', 'Name'];
-        file.forEach((f) => {
-          if (e[f].includes(item) && vm.keyWord !== '') {
-            const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${a[i].ID}'&$format=JSON`;
-            vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
-              vm.$router.push(`/scenePage/${a[i].ID}`).catch(() => {});
-            });
-          }
-        });
+        if (e.ScenicSpotName === item) {
+          const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ScenicSpotID%20eq%20'${a[i].ScenicSpotID}'&$format=JSON`;
+          vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+            vm.$router.push(`/scenePage/${a[i].ScenicSpotID}`).catch(() => {});
+          });
+        } else if (e.RestaurantName === item) {
+          const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=RestaurantID%20eq%20'${a[i].RestaurantID}'&$format=JSON`;
+          vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+            vm.$router.push(`/scenePage/${a[i].RestaurantID}`).catch(() => {});
+          });
+        }
       });
     },
   },
@@ -361,17 +363,34 @@ export default {
       }
       return result;
     },
+    nameTranslate() {
+      const vm = this;
+      let result;
+      if (vm.classNameTranslate === '') {
+        result = '';
+      } else if (vm.classNameTranslate === 'ScenicSpot') {
+        result = 'ScenicSpotName';
+      } else if (vm.classNameTranslate === 'Restaurant') {
+        result = 'RestaurantName';
+      }
+      return result;
+    },
     keyWordFilter() {
       const vm = this;
       const result = [];
-      vm.list.forEach((e) => {
-        const file = ['ID', 'Name'];
-        file.forEach((f) => {
-          if (e[f].includes(vm.keyWord) && vm.keyWord !== '') {
-            result.push(e[f]);
+      if (vm.list && vm.keyWord.length > 0) {
+        vm.list.forEach((e) => {
+          if (e.ScenicSpotName) {
+            if (e.ScenicSpotName.includes(vm.keyWord)) {
+              result.push(e.ScenicSpotName);
+            }
+          } else if (e.RestaurantName) {
+            if (e.RestaurantName.includes(vm.keyWord)) {
+              result.push(e.RestaurantName);
+            }
           }
         });
-      });
+      }
       return result;
     },
   },
