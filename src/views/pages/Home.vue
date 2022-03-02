@@ -339,6 +339,16 @@ export default {
         }
       });
     },
+    apiBuilder(type, id, name, city, other) {
+      const vm = this;
+      const base = 'https://ptx.transportdata.tw/MOTC/v2/Tourism/';
+      const s = 'ScenicSpot';
+      const r = 'Restaurant';
+      const end = '&$format=JSON';
+      const city = vm.cityTranslat;
+      let result = base + type + city + '?$filter=' + '指定id或name' + other + end;
+      
+    },
   },
   computed: {
     cityTranslate() {
