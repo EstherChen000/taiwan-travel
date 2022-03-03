@@ -65,16 +65,18 @@
       </v-row>
       <v-col cols="12" sm="9">
         <v-card v-for="item in viewData" :key="item.ID"
-        @click="getScenicSpots(item.ID)" class="rounded-lg mb-6" outlined>
+        @click="getScenicSpots(item.ScenicSpotID), getRestaurants(item.RestaurantID)"
+        class="rounded-lg mb-6" outlined>
           <div class="d-flex flex-no-wrap justify-start">
             <div>
               <v-img class="rounded-tl-lg rounded-bl-lg"
               :src="item.Picture.PictureUrl1 || availableImg" height="200px" width="200px"></v-img>
             </div>
             <div>
-              <v-card-text class="primary--text py-2">{{ getType(item.ID)}}</v-card-text>
+              <v-card-text class="primary--text py-2">{{ getType(item.ScenicSpotID) ||
+                getType(item.RestaurantID)}}</v-card-text>
               <v-card-title class="font-weight-bold pt-0 pb-8 text-h5"
-                >{{ item.Name }}</v-card-title
+                >{{ item.ScenicSpotName || item.RestaurantName}}</v-card-title
               >
               <v-card-text class="py-0 text-body-1">
                 <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
@@ -173,7 +175,16 @@ export default {
       }
     },
     getScenicSpots(id) {
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${id}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ScenicSpotID%20eq%20'${id}'&$format=JSON`;
+      const vm = this;
+      vm.isLoading = true;
+      vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
+        vm.isLoading = false;
+        vm.$router.push(`/scenePage/${id}`).catch(() => {});
+      });
+    },
+    getRestaurants(id) {
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ScenicSpotID%20eq%20'${id}'&$format=JSON`;
       const vm = this;
       vm.isLoading = true;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then(() => {
@@ -252,17 +263,21 @@ export default {
           g.includes('Class')
         ));
         if (fitKeyNameArr.length > 0) {
-          vm.selectedTranslate.forEach((s) => {
-            vm.aboutSelected.forEach((f) => {
-              fitKeyNameArr.forEach((h) => {
-                if (e[h] === f && e.ID.includes(s)) {
-                  arr.push(e);
-                }
+          if (vm.selectedTranslate.length > 0) {
+            vm.selectedTranslate.forEach((s) => {
+              vm.aboutSelected.forEach((f) => {
+                fitKeyNameArr.forEach((h) => {
+                  if (e.ScenicSpotID && e.ScenicSpotID.includes(s) && e[h] === f) {
+                    arr.push(e);
+                  } else if (e.RestaurantID && e.RestaurantID.includes(s) && e[h] === f) {
+                    arr.push(e);
+                  }
+                });
               });
             });
-          });
+          }
         } else if (vm.aboutSelecte.length > 0 && fitKeyNameArr.length === 0
-        && vm.otherChecker === true) {
+          && vm.otherChecker === true) {
           arr.push(e);
         }
       });

@@ -6,7 +6,7 @@
           alt="Taiwan Travel Logo"
           class="shrink mr-4"
           contain
-          src="@/assets/LOGO.png"
+          src="@/assets/logo.png"
           transition="scale-transition"
           width="40"
         />
