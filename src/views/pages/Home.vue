@@ -175,7 +175,7 @@
         <p class="text-h4 font-weight-bold mb-3">推薦景點</p>
       </v-col>
       <v-col v-for="item in scenic" :key="item.ID" cols="12" sm="4">
-        <v-card @click="getScenicSpots(item.ID)" class="rounded-lg" outlined>
+        <v-card @click="getScenicSpots(item.ScenicSpotID)" class="rounded-lg" outlined>
           <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2 ||
             item.Picture.PictureUrl3 || availableImg"
           height="250px"></v-img>

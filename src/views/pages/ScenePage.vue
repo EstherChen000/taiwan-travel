@@ -4,7 +4,9 @@
     <Navbar></Navbar>
     <v-row class="d-flex flex-no-wrap justify-space-between w-100 mt-6">
       <v-col cols="12" sm="6">
-        <h2 class="font-weight-bold pt-0 pb-8 text-h3">{{scenic[0].Name}}</h2>
+        <h2 class="font-weight-bold pt-0 pb-8 text-h3">
+          {{scenic[0].ScenicSpotName || scenic[0].RestaurantName}}
+        </h2>
         <p class="py-0 text-h4 grey--text">{{scenic[0].Class1 || '其他'}}</p>
         <!-- vp > 600px 顯示 呈現文左圖右 -->
         <div class="d-none d-sm-flex flex-column">
@@ -58,12 +60,15 @@
         </h3>
       </v-col>
       <v-col cols="12" sm="4" v-for="item in getRestaurantThree" :key="item.ID">
-        <v-card @click="getRestaurants(item.ID)" class="rounded-lg" outlined height="400px">
+        <v-card @click="getRestaurants(item.RestaurantID)"
+        class="rounded-lg" outlined height="400px">
           <v-img :src="item.Picture.PictureUrl1 || item.Picture.PictureUrl2
           || availableImg"
           height="250px"></v-img>
           <v-card-text class="primary--text py-2">餐飲</v-card-text>
-          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">{{ item.Name }}</v-card-title>
+          <v-card-title class="font-weight-bold pt-0 pb-8 text-h5">
+            {{ item.RestaurantName }}
+          </v-card-title>
           <v-card-text class="py-0 text-body-1">
             <i class="fas fa-map-marker-alt mr-1"></i>{{ item.Address }}
           </v-card-text>
@@ -96,8 +101,8 @@ export default {
   methods: {
     getScenicSpot() {
       const vm = this;
-      const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
-      const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
+      const api1 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/ScenicSpot?$filter=ScenicSpotID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
+      const api2 = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=RestaurantID%20eq%20'${vm.id}'&$top=30&$format=JSON`;
       const code1 = /C1_\w+/;
       const code2 = /C3_\w+/;
       vm.isLoading = true;
@@ -132,10 +137,14 @@ export default {
       });
     },
     getRestaurants(id) {
-      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=ID%20eq%20'${id}'&$format=JSON`;
+      const api = `https://ptx.transportdata.tw/MOTC/v2/Tourism/Restaurant?$filter=RestaurantID%20eq%20'${id}'&$format=JSON`;
       const vm = this;
       vm.$http.get(api, { headers: vm.getAuthorizationHeader() }).then((response) => {
         vm.scenic = response.data;
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
         vm.$router.push(`/scenePage/${id}`).catch(() => {});
       });
     },
