@@ -37,11 +37,13 @@
                     <div class="d-flex flex-column">
                       <v-card height="300" class="overflow-auto">
                         <v-list>
-                          <v-list-item-group color="primary">
-                            <v-list-item v-for="(item, i) in keyWordFilter" :key="i"
-                            @click="goTo(item)">
-                              {{item}}
-                            </v-list-item>
+                          <v-list-item-group v-for="(item, i) in keyWordFilter" :key="i"
+                          color="primary">
+                            <v-hover>
+                              <v-list-item @click="goTo(item)">
+                                {{item}}
+                              </v-list-item>
+                            </v-hover>
                           </v-list-item-group>
                         </v-list>
                       </v-card>
@@ -104,11 +106,13 @@
                     <div class="d-flex flex-column">
                       <v-card height="300" class="overflow-auto">
                         <v-list>
-                          <v-list-item-group color="primary">
-                            <v-list-item v-for="(item, i) in keyWordFilter" :key="i"
-                            @click="goTo(item)">
-                              {{item}}
-                            </v-list-item>
+                          <v-list-item-group v-for="(item, i) in keyWordFilter" :key="i"
+                          color="primary">
+                            <v-hover>
+                              <v-list-item @click="goTo(item)">
+                                {{item}}
+                              </v-list-item>
+                            </v-hover>
                           </v-list-item-group>
                         </v-list>
                       </v-card>
