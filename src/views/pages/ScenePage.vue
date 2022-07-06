@@ -71,13 +71,20 @@
         <h3 class="text-h4 font-weight-bold mb-6">地圖</h3>
       </v-col>
       <v-col cols="12">
-        <GmapMap :center="center"
-                 :zoom="15"
+        <GmapMap :center="marker[0].position"
+                 :zoom="12"
                  :options="options"
                  style="width: 100%; height: 600px">
-          <GmapMarker :position="marker.position"
+          <GmapMarker v-for="(element, index) in marker"
+                      :key="index"
+                      :position="element.position"
                       :clickable="true"
-                      :draggable="false" />
+                      :draggable="false"
+                      @click="toggleMapInfo(element, index)" />
+          <GmapInfoWindow :position="infoWindowPos"
+                          :opened="infoWinOpen"
+                          :options="infoOptions"
+                          @closeclick="infoWinOpen = false" />
         </GmapMap>
       </v-col>
     </v-row>
@@ -128,8 +135,6 @@ export default {
     selectedCity: '',
     availableImg: 'https://picsum.photos/200/200/?random=4',
     isLoading: false,
-    marker: { position: { lat: null, lng: null } },
-    center: { lat: null, lng: null },
     options: {
       mapTypeControl: false,
       scaleControl: false,
@@ -138,6 +143,18 @@ export default {
       disableDefaultUI: false,
       scrollwheel: true,
       clickableIcons: true,
+    },
+    marker: [],
+    infoWindowPos: null,
+    infoWinOpen: false,
+    currentIndex: null,
+    infoOptions: {
+      maxWidth: 200,
+      content: '',
+      pixelOffset: {
+        width: 0,
+        height: -40,
+      },
     },
   }),
   methods: {
@@ -153,20 +170,7 @@ export default {
           .get(api1, { headers: vm.getAuthorizationHeader() })
           .then((response) => {
             vm.scenic = response.data;
-            vm.marker = {
-              position: {
-                lat: vm.scenic[0].Position.PositionLat,
-                lng: vm.scenic[0].Position.PositionLon,
-              },
-            };
-            vm.center = {
-              lat: vm.scenic[0].Position.PositionLat,
-              lng: vm.scenic[0].Position.PositionLon,
-            };
-            vm.location = {
-              lat: vm.scenic[0].Position.PositionLat,
-              lng: vm.scenic[0].Position.PositionLon,
-            };
+            vm.getMarker(response, 2);
             vm.selectedCity = response.data[0].City;
             vm.getRestaurant();
           });
@@ -175,10 +179,7 @@ export default {
           .get(api2, { headers: vm.getAuthorizationHeader() })
           .then((response) => {
             vm.scenic = response.data;
-            vm.location = {
-              lat: response.data.Position.PositionLat,
-              lng: response.data.Position.PositionLon,
-            };
+            vm.getMarker(response, 2);
             vm.selectedCity = response.data[0].City;
             vm.getRestaurant();
           });
@@ -231,6 +232,39 @@ export default {
       + '", algorithm="hmac-sha1", headers="x-date", signature="'
       + HMAC + '"';
       return { Authorization: authorization, 'x-date': GMTString };
+    },
+    getMarker(response, layer = 1) {
+      const vm = this;
+      if (layer === 2) {
+        response.data.forEach((e) => {
+          vm.marker.push({
+            position: {
+              lat: e.Position.PositionLat,
+              lng: e.Position.PositionLon,
+            },
+            infoText: `"<h1>${e.ScenicSpotName}</h1>"`,
+          });
+        });
+      } else if (layer === 0) {
+        vm.marker.push({
+          position: {
+            lat: response.Position.PositionLat,
+            lng: response.Position.PositionLon,
+          },
+          infoText: response.RestaurantName,
+        });
+      }
+    },
+    toggleMapInfo(marker, index) {
+      const vm = this;
+      vm.infoWindowPos = marker.position;
+      vm.infoOptions.content = marker.infoText;
+      if (vm.currentIndex === index) {
+        vm.infoWinOpen = !vm.infoWinOpen;
+      } else {
+        vm.infoWinOpen = true;
+        vm.currentIndex = index;
+      }
     },
   },
   computed: {
@@ -303,6 +337,7 @@ export default {
       vm.restaurant.forEach((e, index) => {
         if (index >= rand && index < rand + 3) {
           arr.push(e);
+          vm.getMarker(e, 0);
         }
       });
       return arr;
