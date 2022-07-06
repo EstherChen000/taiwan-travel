@@ -15,6 +15,12 @@
 taiwan-travel是一個使用Vue cli建立的旅遊景點查詢網站，此站為練習前端所做。
 此站API串接資料使用[PTX公共運輸整合資訊流通服務平台](https://ptx.transportdata.tw/PTX/)。
 
+## 日誌
+
+---
+
+2022.07.06 新增地圖功能，可以在地圖中檢視景點與餐廳的位置。
+
 ## 如何使用
 
 ---
@@ -43,6 +49,7 @@ taiwan-travel是一個使用Vue cli建立的旅遊景點查詢網站，此站為
 - [vue-axios](https://github.com/imcvampire/vue-axios#readme)
 - [vue-router](https://router.vuejs.org/)
 - [vue-loading-overlay](https://github.com/ankurk91/vue-loading-overlay)(實現頁面載入效果)
+- [vue-google-maps](https://github.com/xkjyeah/vue-google-maps#readme)
 
 ## 設置
 
@@ -67,4 +74,4 @@ npm run serve
 
 ---
 
-尚未規劃
+逐步優化程式碼
