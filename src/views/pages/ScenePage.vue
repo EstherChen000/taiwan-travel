@@ -149,7 +149,7 @@ export default {
     infoWinOpen: false,
     currentIndex: null,
     infoOptions: {
-      maxWidth: 200,
+      maxWidth: 300,
       content: '',
       pixelOffset: {
         width: 0,
@@ -237,13 +237,27 @@ export default {
       const vm = this;
       if (layer === 2) {
         response.data.forEach((e) => {
-          vm.marker.push({
-            position: {
-              lat: e.Position.PositionLat,
-              lng: e.Position.PositionLon,
-            },
-            infoText: `"<h1>${e.ScenicSpotName}</h1>"`,
-          });
+          if (e.ScenicSpotName) {
+            vm.marker.push({
+              position: {
+                lat: e.Position.PositionLat,
+                lng: e.Position.PositionLon,
+              },
+              infoText: `<h3 class="primary--text mb-1">${e.ScenicSpotName}</h1>
+                        <p class="mb-0">地址： ${e.Address}</p>
+                        <p class="mb-0">營業時間： ${e.OpenTime}</p>`,
+            });
+          } else {
+            vm.marker.push({
+              position: {
+                lat: e.Position.PositionLat,
+                lng: e.Position.PositionLon,
+              },
+              infoText: `<h3 class="primary--text mb-1">${e.RestaurantName}</h1>
+                        <p class="mb-0">地址： ${e.Address}</p>
+                        <p class="mb-0">營業時間： ${e.OpenTime}</p>`,
+            });
+          }
         });
       } else if (layer === 0) {
         vm.marker.push({
@@ -251,7 +265,9 @@ export default {
             lat: response.Position.PositionLat,
             lng: response.Position.PositionLon,
           },
-          infoText: response.RestaurantName,
+          infoText: `<h3 class="mb-1">${response.RestaurantName}</h1>
+                     <p class="mb-0">地址： ${response.Address}</p>
+                     <p class="mb-0">營業時間： ${response.OpenTime}</p>`,
         });
       }
     },
